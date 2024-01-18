@@ -1,0 +1,61 @@
+- name: PLAY - Create UCS and Collect all BIG-IP information
+  hosts: "{{ bigip }}"
+  connection: local
+  vars:
+    #hosts: "{{ inventory_hostname }}"
+    backup_file_name: "{{ inventory_hostname }}-{{ ansible_date_time.date }}-{{ ansible_date_time.hour }}-{{ ansible_date_time.minute }}-{{ ansible_date_time.second }}"
+    provider:
+      user: "{{ ansible_user }}"
+      server: "{{ ansible_host }}"
+      server_port: "{{ ansible_port }}"
+      password: "{{ ansible_pass }}"
+      transport: rest
+      validate_certs: no
+      no_f5_teem: false
+  gather_facts: true
+  tasks:
+    - name: 01-Create a new UCS and Download
+      f5networks.f5_modules.bigip_ucs_fetch:
+        async_timeout: 1200
+        src: "{{ backup_file_name }}.ucs"
+        dest: "./output/{{ backup_file_name }}.ucs"
+        create_on_missing: true
+        only_create_file: false
+        fail_on_missing: false
+        provider: "{{ provider }}"
+      delegate_to: localhost
+    - name: 02-Remove the UCS from the device
+      f5networks.f5_modules.bigip_ucs:
+        ucs: "{{ backup_file_name }}.ucs"
+        state: absent
+        provider: "{{ provider }}"
+      delegate_to: localhost
+    - name: 03-Get running config on remote device
+      f5networks.f5_modules.bigip_command:
+        chdir: "/"
+        commands:
+           - show running-config recursive
+        provider: "{{ provider }}"
+      delegate_to: localhost
+      register: output
+    - name: 04-Copy output of running config to file
+      copy: content="{{ output.stdout[0] }}" dest=./output/{{ backup_file_name }}.txt
+    - name: 05-Get master key on remote device
+      f5networks.f5_modules.bigip_command:
+        #chdir: "/"
+        commands:
+          - run util bash -c "f5mku -K"
+        provider: "{{ provider }}"
+      delegate_to: localhost
+      register: output
+    - name: 06-Copy master key to file
+      copy: content="{{ output.stdout[0] }}" dest=./output/{{ backup_file_name }}.key      
+    - name: 07-Collect all BIG-IP information
+      f5networks.f5_modules.bigip_device_info:
+        gather_subset:
+          - all
+        provider: "{{ provider }}"
+      delegate_to: localhost
+      register: output
+    - name: 08-Copy all BIG-IP information
+      copy: content="{{ output | to_nice_json }}" dest=./output/{{ backup_file_name }}.info
