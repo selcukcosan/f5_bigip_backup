@@ -2,7 +2,6 @@
   hosts: "{{ bigip }}"
   connection: local
   vars:
-    #hosts: "{{ inventory_hostname }}"
     backup_file_name: "{{ inventory_hostname }}-{{ ansible_date_time.date }}-{{ ansible_date_time.hour }}-{{ ansible_date_time.minute }}-{{ ansible_date_time.second }}"
     provider:
       user: "{{ ansible_user }}"
