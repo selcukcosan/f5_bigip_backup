@@ -1,0 +1,11 @@
+- name: PLAY - Create UCS and Collect all BIG-IP information
+  hosts: "{{ bigip }}"
+  connection: local
+  gather_facts: false
+  vars:
+    backup_file_name: "{{ inventory_hostname }}-{{ ansible_date_time.date }}-{{ ansible_date_time.hour }}-{{ ansible_date_time.minute }}-{{ ansible_date_time.second }}"
+  tasks:
+    - name: 00-Collect Facts
+      ansible.builtin.setup:
+    - name: 00-Copy output of Facts to file
+      copy: content="{{ ansible_facts }}" dest=./output/{{ backup_file_name }}.facts
