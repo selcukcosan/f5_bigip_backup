@@ -1,6 +1,7 @@
 - name: PLAY - Create UCS and Collect all BIG-IP information
   hosts: "{{ bigip }}"
   connection: local
+  gather_facts: false
   vars:
     backup_file_name: "{{ inventory_hostname }}-{{ ansible_date_time.date }}-{{ ansible_date_time.hour }}-{{ ansible_date_time.minute }}-{{ ansible_date_time.second }}"
     provider:
@@ -11,8 +12,9 @@
       transport: rest
       validate_certs: no
       no_f5_teem: false
-  gather_facts: false
   tasks:
+    - name: Collect facts
+      setup:
     - name: 01-Create a new UCS and Download
       f5networks.f5_modules.bigip_ucs_fetch:
         async_timeout: 1200
