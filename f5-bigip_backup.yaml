@@ -14,7 +14,7 @@
       no_f5_teem: false
   tasks:
     - name: 00-Collect Facts
-      setup:
+      ansible.builtin.setup:
     - name: 01-Create a new UCS and Download
       f5networks.f5_modules.bigip_ucs_fetch:
         async_timeout: 1200
